@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mini Angry Birds</title>
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#87CEEB;
+}
+canvas{
+    display:block;
+    margin:auto;
+    background:#87CEEB;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" width="1000" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let bird = {
+    x:150,
+    y:450,
+    radius:20,
+    vx:0,
+    vy:0,
+    launched:false
+};
+
+let pigs = [
+    {x:800,y:450,r:20,alive:true},
+    {x:850,y:450,r:20,alive:true},
+    {x:825,y:400,r:20,alive:true}
+];
+
+let dragging = false;
+
+canvas.addEventListener("mousedown", e=>{
+    const dx=e.offsetX-bird.x;
+    const dy=e.offsetY-bird.y;
+
+    if(Math.sqrt(dx*dx+dy*dy)<bird.radius){
+        dragging=true;
+    }
+});
+
+canvas.addEventListener("mousemove", e=>{
+    if(dragging){
+        bird.x=e.offsetX;
+        bird.y=e.offsetY;
+    }
+});
+
+canvas.addEventListener("mouseup", ()=>{
+    if(dragging){
+        bird.vx=(150-bird.x)/5;
+        bird.vy=(450-bird.y)/5;
+        bird.launched=true;
+        dragging=false;
+    }
+});
+
+function update(){
+
+    if(bird.launched){
+        bird.vy+=0.3;
+        bird.x+=bird.vx;
+        bird.y+=bird.vy;
+
+        if(bird.y>580){
+            bird.y=580;
+            bird.vy*= -0.4;
+            bird.vx*=0.9;
+        }
+    }
+
+    pigs.forEach(p=>{
+        if(!p.alive) return;
+
+        let dx=bird.x-p.x;
+        let dy=bird.y-p.y;
+        let dist=Math.sqrt(dx*dx+dy*dy);
+
+        if(dist < bird.radius+p.r){
+            p.alive=false;
+        }
+    });
+}
+
+function draw(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Ground
+    ctx.fillStyle="green";
+    ctx.fillRect(0,500,1000,100);
+
+    // Slingshot
+    ctx.strokeStyle="brown";
+    ctx.lineWidth=8;
+    ctx.beginPath();
+    ctx.moveTo(140,450);
+    ctx.lineTo(140,380);
+    ctx.stroke();
+
+    // Bird
+    ctx.fillStyle="red";
+    ctx.beginPath();
+    ctx.arc(bird.x,bird.y,bird.radius,0,Math.PI*2);
+    ctx.fill();
+
+    // Eye
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(bird.x+5,bird.y-5,5,0,Math.PI*2);
+    ctx.fill();
+
+    // Pigs
+    pigs.forEach(p=>{
+        if(!p.alive) return;
+
+        ctx.fillStyle="lime";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    let remaining = pigs.filter(p=>p.alive).length;
+
+    ctx.fillStyle="black";
+    ctx.font="30px Arial";
+    ctx.fillText("Pigs Left: "+remaining,20,40);
+
+    if(remaining===0){
+        ctx.font="50px Arial";
+        ctx.fillText("YOU WIN!",350,250);
+    }
+}
+
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
